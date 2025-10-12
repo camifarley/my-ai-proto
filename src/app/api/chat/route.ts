@@ -15,7 +15,20 @@ function getModel() {
 }
 
 export async function POST(req: NextRequest) {
-  const { messages } = await req.json();
+    const { messages } = await req.json();
+    const last = messages?.[messages.length - 1]?.content ?? "";
+
+    // TEMP DEBUG: if user types exactly "ping", just echo back
+    if (last === "ping") {
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+        start(controller) {
+        controller.enqueue(encoder.encode("pong"));
+        controller.close();
+        },
+    });
+    return new Response(stream, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
+    }
 
   const result = await streamText({
     model: getModel(),
