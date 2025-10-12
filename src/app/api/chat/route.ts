@@ -1,6 +1,5 @@
-import { streamText, generateText } from "ai";
 import { NextRequest } from "next/server";
-import { streamText } from "ai";
+import { streamText, generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { google } from "@ai-sdk/google";
 
