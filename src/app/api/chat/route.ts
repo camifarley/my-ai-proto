@@ -24,5 +24,5 @@ export async function POST(req: NextRequest) {
   });
 
   // This returns the exact streaming format that `useChat` expects.
-  return result.toAIStreamResponse();
+  return result.toTextStreamResponse();
 }
