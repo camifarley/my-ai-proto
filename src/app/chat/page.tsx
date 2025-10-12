@@ -41,7 +41,7 @@ export default function ChatPage() {
         throw new Error(`API ${res.status}: ${txt || res.statusText}`);
       }
 
-      // 3) stream the assistant reply
+      // 3) stream the assistant reply (with flush + empty check)
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let acc = "";
@@ -49,20 +49,34 @@ export default function ChatPage() {
       // add a placeholder assistant message we’ll keep updating
       setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
 
-      while (true) {
-        const { value: chunk, done } = await reader.read();
-        if (done) break;
-        acc += decoder.decode(chunk, { stream: true });
-
-        // update the last (assistant) message with streamed text
+      const updateAssistant = (text: string) => {
         setMessages((prev) => {
           const copy = [...prev];
           const lastIdx = copy.length - 1;
           if (lastIdx >= 0 && copy[lastIdx].role === "assistant") {
-            copy[lastIdx] = { role: "assistant", content: acc };
+            copy[lastIdx] = { role: "assistant", content: text };
           }
           return copy;
         });
+      };
+
+      while (true) {
+        const { value: chunk, done } = await reader.read();
+        if (done) break;
+        acc += decoder.decode(chunk, { stream: true });
+        updateAssistant(acc); // update as chunks arrive
+      }
+
+      // 🔽 flush any remaining buffered bytes
+      const tail = decoder.decode();
+      if (tail) {
+        acc += tail;
+        updateAssistant(acc);
+      }
+
+      // If absolutely nothing came back, show a friendly note
+      if (!acc.trim()) {
+        updateAssistant("(no response received)");
       }
     } catch (err) {
     if (err instanceof Error) {
