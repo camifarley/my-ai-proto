@@ -1,3 +1,4 @@
+import { streamText, generateText } from "ai";
 import { NextRequest } from "next/server";
 import { streamText } from "ai";
 import { openai } from "@ai-sdk/openai";
@@ -27,6 +28,25 @@ export async function POST(req: NextRequest) {
         controller.close();
         },
     });
+    // If the user sends "diag", test a non-streaming call and return plain text
+    if (last === "diag") {
+        try {
+            const out = await generateText({
+            model: getModel(),
+            prompt: "Reply with 'hello' only.",
+            });
+            return new Response(out.text, {
+            headers: { "Content-Type": "text/plain; charset=utf-8" },
+            });
+        } catch (e: any) {
+            const msg = e?.message || "Unknown model error";
+            return new Response(JSON.stringify({ error: msg }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+            });
+        }
+    }
+
     return new Response(stream, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
     }
 
