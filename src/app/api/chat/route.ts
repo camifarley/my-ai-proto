@@ -9,9 +9,12 @@ export const runtime = "edge";
 function getModel() {
   const provider = process.env.AI_PROVIDER?.toLowerCase();
   if (provider === "google") {
-    return google("gemini-1.5-pro-latest");
+    // Use AI_MODEL env to override; default to a Google model that supports generateContent/chat.
+    // Try "models/chat-bison-001" or "models/text-bison-001" if gemini variants fail for your API/version.
+    const model = process.env.AI_MODEL || "models/gemini-2.5-flash";
+    return google(model);
   }
-  return openai("gpt-4o-mini");
+  return openai(process.env.AI_MODEL || "gpt-4o-mini");
 }
 
 export async function POST(req: NextRequest) {
